@@ -14,30 +14,28 @@ services:
       timeout: 5s
       retries: 3
 
-
   postgresdb:
     image: postgres
     container_name: postgresdb
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: postgresdb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - 5432:5432
     networks:
       - project-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
 
   vote:
     build: ./vote
     container_name: vote
     environment:
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
     ports:
       - 8501:8501
     depends_on:
@@ -45,12 +43,11 @@ services:
     networks:
       - project-network
 
-
   worker:
     build: ./worker
     container_name: worker
     environment:
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
       POSTGRES_HOST: postgresdb
     depends_on:
       - postgresdb
@@ -58,11 +55,10 @@ services:
     networks:
       - project-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import psycopg2; conn = psycopg2.connect(host='postgresdb', database='postgresdb', user='postgres', password='mysecretpassword', port='5432'); conn.close()"]
+      test: ["CMD", "python3", "-c", "import psycopg2; conn = psycopg2.connect(host='postgresdb', database='${POSTGRES_DB}', user='${POSTGRES_USER}', password='${POSTGRES_PASSWORD}', port='5432'); conn.close()"]
       interval: 10s
       timeout: 5s
       retries: 5
-
 
   result:
     build: ./result
@@ -80,7 +76,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-
 
 networks:
   project-network:
