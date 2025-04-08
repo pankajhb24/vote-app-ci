@@ -1,7 +1,10 @@
-name: Build and Push Docker Images
+name: CI for Vote App
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -10,28 +13,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies for Vote Service
+      run: |
+        cd vote
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install dependencies for Result Service
+      run: |
+        cd result
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests for Vote Service
+      run: |
+        cd vote
+        pytest
+
+    - name: Run tests for Result Service
+      run: |
+        cd result
+        pytest
+
     - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        token: ${{ secrets.DOCKER_PASSWORD }}
-    
-    - name: Build and push vote service image
-      uses: docker/build-push-action@v2
-      with:
-        context: ./vote-service
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/vote-service:latest
-    
-    - name: Build and push result service image
-      uses: docker/build-push-action@v2
-      with:
-        context: ./result-service
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/result-service:latest
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+    - name: Build and push Vote Service Docker image
+      run: |
+        cd vote
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/vote-service:latest .
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/vote-service:latest
+
+    - name: Build and push Result Service Docker image
+      run: |
+        cd result
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/result-service:latest .
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/result-service:latest
