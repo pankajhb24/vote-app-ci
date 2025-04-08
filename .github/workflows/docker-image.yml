@@ -1,45 +1,39 @@
-name: CI-build-and-push-images-for-vote-and-result-services
+name: Deploy Voting App Services
 
 on:
   push:
-    branches: [ main ]
-    paths-ignore:
-      - README.md
-      - .vscode/**
-      - .gitignore
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - README.md
-      - .vscode/**
-      - .gitignore
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.dockerhub_username }}
-          password: ${{ secrets.dockerhub_token }}
-      - name: Build and push vote-service
-        uses: docker/build-push-action@v2
-       vote-service
-          file: Dockerfile
-          push: true
-          tags: ${{ secrets.dockerhub_username }}/vote-service:latest, ${{ secrets.dockerhub_username }}/vote-service:${{ github.run_number }}
-      - name: Build and push result-service
-        uses: docker/build-push-action@v2
-        with:
-          context: ./result-service
-          file: Dockerfile
-          push: true
-          tags: ${{ secrets.dockerhub_username }}/result-service:latest, ${{ secrets.dockerhub_username }}/result-service:${{ github.run_number }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.dockerhub_username }}
+        password: ${{ secrets.dockerhub_token }}
+
+    - name: Build and push Docker images for vote service
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/vote-service
+          ${{ secrets.DOCKERHUB_TOKEN }}/vote-service:${{ github.run_number }}
+
+    - name: Build and push Docker images for result service
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/result-service
+          ${{ secrets.DOCKERHUB_TOKEN }}/result-service:${{ github.run_number }}
