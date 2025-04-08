@@ -27,13 +27,13 @@ jobs:
       with:
         push: true
         tags: |
-          ${{ secrets.dockerhub_usernameE }}/vote-service
-          ${{ secrets.dockerhub_token }}/vote-service:${{ github.run_number }}
+          ${{ secrets.dockerhub_usernameE }}/vote1
+          ${{ secrets.dockerhub_token }}/vote1:${{ github.run_number }}
 
     - name: Build and push Docker images for result service
       uses: docker/build-push-action@v2
       with:
         push: true
         tags: |
-          ${{ secrets.dockerhub_username }}/result-service
-          ${{ secrets.dockerhub_token }}/result-service:${{ github.run_number }}
+          ${{ secrets.dockerhub_username }}/result1
+          ${{ secrets.dockerhub_token }}/result1:${{ github.run_number }}
