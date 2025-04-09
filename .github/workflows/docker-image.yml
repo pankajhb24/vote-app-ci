@@ -1,4 +1,4 @@
-name: CI and Docker
+name: CI and Docker for vote app
 
 on:
   push:
