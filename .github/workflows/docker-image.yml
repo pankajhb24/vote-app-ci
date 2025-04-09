@@ -42,7 +42,7 @@ jobs:
         if [ -f VERSION.txt ]; then
           VERSION=$(cat VERSION.txt)
         else
-          VERSION="0.0.1"
+          VERSION="1.0"
         fi
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
@@ -102,7 +102,7 @@ jobs:
         context: ./vote
         file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
@@ -110,7 +110,7 @@ jobs:
         context: ./result
         file: ./result/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
 
     - name: Build and push worker Docker image
       uses: docker/build-push-action@v4
@@ -118,14 +118,15 @@ jobs:
         context: ./worker
         file: ./worker/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
 
+    # Increment version number and commit
     - name: Increment version number and commit
       env:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         VERSION=$(cat VERSION.txt)
-        NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++;print}')
+        NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$1++; $2=0; print}')
         echo $NEW_VERSION > VERSION.txt
         echo "New version: $NEW_VERSION"
         git config --global user.email "pankajbehare2024@gmail.com"
