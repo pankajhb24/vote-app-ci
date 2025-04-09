@@ -1,130 +1,63 @@
-name: CI and Docker for vote app
+name: CI and Docker
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:latest
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: vote_app
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    strategy:
-      matrix:
-        service: [vote, worker, result]
-        language: [python, node]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Extract version number
-      id: get_version
-      run: |
-        if [ -f VERSION.txt ]; then
-          VERSION=$(cat VERSION.txt)
-        else
-          VERSION="latest"
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-    # Setup Python for vote and worker services
-    - name: Set up Python
-      if: matrix.language == 'python'
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies (Python - vote)
-      if: matrix.language == 'python' && matrix.service == 'vote'
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r vote/requirements.txt
-    - name: Install dependencies (Python - worker)
-      if: matrix.language == 'python' && matrix.service == 'worker'
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r worker/requirements.txt
-    # Setup Node.js for result service
-    - name: Set up Node.js
-      if: matrix.language == 'node'
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
-
-    - name: Install dependencies (Node - result)
-      if: matrix.language == 'node' && matrix.service == 'result'
-      run: |
-        cd result
-        npm install
-  docker:
-    needs: build
+  build-and-push-docker:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    # Step 1: Checkout the repository
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Login to Docker Hub
+    # Step 2: Set up Docker
+    - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push vote Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./vote
-        file: ./vote/Dockerfile
-        push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:latest
-
-    - name: Build and push result Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./result
-        file: ./result/Dockerfile
-        push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:latest
-
-    - name: Build and push worker Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./worker
-        file: ./worker/Dockerfile
-        push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:latest
-
-    - name: Increment version number
-      env:
-        GH_PAT: ${{ secrets.GH_PAT }}
+    # Step 3: Read the current version from VERSION.txt and increment it
+    - name: Update VERSION.txt
+      id: versioning
       run: |
-        VERSION=$(cat VERSION.txt)
-        NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++;print}')
-        echo $NEW_VERSION > VERSION.txt
-        git config --global user.email "pankajbehare2024@gmail.com"
-        git config --global user.name "pankajhb24"
-        git add VERSION.txt
-        git commit -m "Increment version number to $NEW_VERSION"
-        git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
+        # Read the current version from VERSION.txt
+        current_version=$(cat VERSION.txt)
+        echo "Current version: $current_version"
 
-   
+        # Increment the version (e.g., 1.0.0 -> 1.0.1)
+        IFS='.' read -r major minor patch <<< "$current_version"
+        patch=$((patch + 1))
+        new_version="$major.$minor.$patch"
+        echo "New version: $new_version"
+
+        # Write the new version back to VERSION.txt
+        echo "$new_version" > VERSION.txt
+
+        # Export the new version as an environment variable
+        echo "new_version=$new_version" >> $GITHUB_ENV
+
+    # Step 4: Build the Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/vote-app:${{ env.new_version }} .
+
+    # Step 5: Push the Docker image to Docker Hub
+    - name: Push Docker Image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/vote-app:${{ env.new_version }}
+
+    # Step 6: Commit and push the updated VERSION.txt
+    - name: Commit and Push VERSION.txt
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "actions@github.com"
+        git add VERSION.txt
+        git commit -m "Increment version number to ${{ env.new_version }}"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
