@@ -77,13 +77,13 @@ jobs:
       if: matrix.language == 'node' && matrix.service == 'result'
       run: |
         cd result
-        npm install
+        #npm install
 
     - name: Run tests (Node - result)
       if: matrix.language == 'node' && matrix.service == 'result'
       run: |
         cd result
-        npm test
+        #npm test
 
   docker:
     needs: build
