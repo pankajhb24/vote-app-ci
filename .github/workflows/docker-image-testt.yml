@@ -1,3 +1,4 @@
+
 name: CI and Docker with build and push
 
 on:
@@ -63,8 +64,9 @@ jobs:
     - name: Install dependencies (Node)
       if: matrix.language == 'node'
       run: |
+        npm cache clean --force
         npm install
-
+        
     - name: Run tests (Node)
       if: matrix.language == 'node'
       run: |
