@@ -127,12 +127,4 @@ jobs:
         git commit -m "Increment version number to $NEW_VERSION"
         git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
 
-     - name: Commit and Push Changes
-       env:
-        GH_PAT: ${{ secrets.GH_PAT }}
-       run: |
-         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-         git config --global user.name "github-actions[bot]"
-         git add VERSION.txt
-         git commit -m "Increment version number"
-         git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
+   
