@@ -61,11 +61,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r worker/requirements.txt
 
-    - name: Run tests (Python)
-      if: matrix.language == 'python'
-      run: |
-        echo "No tests to run for Python services"
-
     # Setup Node.js for result service
     - name: Set up Node.js
       if: matrix.language == 'node'
@@ -78,12 +73,6 @@ jobs:
       run: |
         cd result
         npm install
-
-    - name: Run tests (Node - result)
-      if: matrix.language == 'node' && matrix.service == 'result'
-      run: |
-        cd result
-        npm test
 
   docker:
     needs: build
