@@ -1,5 +1,5 @@
 
-name: CI and Docker with build and push
+name: CI and Docker
 
 on:
   push:
@@ -30,31 +30,38 @@ jobs:
 
     strategy:
       matrix:
+        service: [vote, worker]
         language: [python, node]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Setup Python
+    # Setup Python for vote and worker services
     - name: Set up Python
       if: matrix.language == 'python'
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    - name: Install dependencies (Python)
-      if: matrix.language == 'python'
+    - name: Install dependencies (Python - vote)
+      if: matrix.language == 'python' && matrix.service == 'vote'
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r vote/requirements.txt
+
+    - name: Install dependencies (Python - worker)
+      if: matrix.language == 'python' && matrix.service == 'worker'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r worker/requirements.txt
 
     - name: Run tests (Python)
       if: matrix.language == 'python'
       run: |
         python -m pytest
 
-    # Setup Node.js
+    # Setup Node.js for result service
     - name: Set up Node.js
       if: matrix.language == 'node'
       uses: actions/setup-node@v3
@@ -64,9 +71,8 @@ jobs:
     - name: Install dependencies (Node)
       if: matrix.language == 'node'
       run: |
-       # npm cache clean --force
         npm install
-        
+
     - name: Run tests (Node)
       if: matrix.language == 'node'
       run: |
