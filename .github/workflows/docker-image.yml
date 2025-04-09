@@ -26,7 +26,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     strategy:
       matrix:
         service: [vote, worker, result]
@@ -45,7 +44,6 @@ jobs:
           VERSION="latest"
         fi
         echo "VERSION=$VERSION" >> $GITHUB_ENV
-
     # Setup Python for vote and worker services
     - name: Set up Python
       if: matrix.language == 'python'
@@ -58,13 +56,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r vote/requirements.txt
-
     - name: Install dependencies (Python - worker)
       if: matrix.language == 'python' && matrix.service == 'worker'
       run: |
         python -m pip install --upgrade pip
         pip install -r worker/requirements.txt
-
     # Setup Node.js for result service
     - name: Set up Node.js
       if: matrix.language == 'node'
@@ -77,7 +73,6 @@ jobs:
       run: |
         cd result
         npm install
-
   docker:
     needs: build
     runs-on: ubuntu-latest
@@ -101,7 +96,7 @@ jobs:
         context: ./vote
         file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:20.0.0
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
@@ -109,7 +104,7 @@ jobs:
         context: ./result
         file: ./result/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:20.0.0
 
     - name: Build and push worker Docker image
       uses: docker/build-push-action@v4
@@ -117,7 +112,7 @@ jobs:
         context: ./worker
         file: ./worker/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:20.0.0
 
     - name: Increment version number
       env:
@@ -126,8 +121,8 @@ jobs:
         VERSION=$(cat VERSION.txt)
         NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++;print}')
         echo $NEW_VERSION > VERSION.txt
-        git config --global user.email "you@example.com"
-        git config --global user.name "Your Name"
+        git config --global user.email "pankajbehare2024@gmail.com"
+        git config --global user.name "pankajhb24"
         git add VERSION.txt
         git commit -m "Increment version number to $NEW_VERSION"
         git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
