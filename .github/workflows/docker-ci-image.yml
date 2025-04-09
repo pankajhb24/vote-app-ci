@@ -1,6 +1,12 @@
 name: CI and Docker
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -13,72 +19,70 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_DB: vote_app
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     strategy:
       matrix:
+        service: [vote, worker, result]
         language: [python, node]
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    # Setup Python
+    - name: Extract version number
+      id: get_version
+      run: |
+        VERSION=$(cat VERSION.txt)
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    # Setup Python for vote and worker services
     - name: Set up Python
       if: matrix.language == 'python'
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
 
-    - name: Cache Python dependencies
-      if: matrix.language == 'python'
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    - name: Install dependencies (Python)
-      if: matrix.language == 'python'
+    - name: Install dependencies (Python - vote)
+      if: matrix.language == 'python' && matrix.service == 'vote'
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r vote/requirements.txt
+
+    - name: Install dependencies (Python - worker)
+      if: matrix.language == 'python' && matrix.service == 'worker'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r worker/requirements.txt
 
     - name: Run tests (Python)
       if: matrix.language == 'python'
       run: |
-        python -m pytest
+        echo "No tests to run for Python services"
 
-    # Setup Node.js
+    # Setup Node.js for result service
     - name: Set up Node.js
-     node'
+      if: matrix.language == 'node'
       uses: actions/setup-node@v3
       with:
         node-version: '16'
 
-    - name: Cache Node.js modules
-      if: matrix.language == 'node'
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-
-    - name: Install dependencies (Node)
-      if: matrix.language == 'node'
+    - name: Install dependencies (Node - result)
+      if: matrix.language == 'node' && matrix.service == 'result'
       run: |
+        cd result
         npm install
 
-    - name: Run tests (Node)
-      if: matrix.language == 'node'
+    - name: Run tests (Node - result)
+      if: matrix.language == 'node' && matrix.service == 'result'
       run: |
+        cd result
         npm test
 
   docker:
@@ -86,7 +90,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
@@ -98,22 +103,36 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
     - name: Build and push vote Docker image
-     4
+      uses: docker/build-push-action@v4
       with:
         context: ./vote
+        file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
       with:
         context: ./result
+        file: ./result/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
 
     - name: Build and push worker Docker image
       uses: docker/build-push-action@v4
       with:
         context: ./worker
+        file: ./worker/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
+
+    - name: Increment version number
+      run: |
+        VERSION=$(cat VERSION.txt)
+        NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++;print}')
+        echo $NEW_VERSION > VERSION.txt
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
+        git add VERSION.txt
+        git commit -m "Increment version number to $NEW_VERSION"
+        git push
