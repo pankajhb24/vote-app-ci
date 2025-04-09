@@ -101,7 +101,7 @@ jobs:
         context: ./vote
         file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:20.0.0
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
@@ -109,7 +109,7 @@ jobs:
         context: ./result
         file: ./result/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:20.0.0
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
 
     - name: Build and push worker Docker image
       uses: docker/build-push-action@v4
@@ -117,15 +117,17 @@ jobs:
         context: ./worker
         file: ./worker/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:20.0.0
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
 
     - name: Increment version number
+      env:
+        GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         VERSION=$(cat VERSION.txt)
         NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++;print}')
         echo $NEW_VERSION > VERSION.txt
-        git config --global user.email "pankajbehare2024@gmail.com"
-        git config --global user.name "pankajhb24"
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
         git add VERSION.txt
         git commit -m "Increment version number to $NEW_VERSION"
-        git push
+        git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
