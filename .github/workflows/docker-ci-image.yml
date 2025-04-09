@@ -101,7 +101,7 @@ jobs:
         context: ./vote
         file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:latest
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
@@ -109,7 +109,7 @@ jobs:
         context: ./result
         file: ./result/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/result:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:latest
 
     - name: Build and push worker Docker image
       uses: docker/build-push-action@v4
@@ -117,7 +117,7 @@ jobs:
         context: ./worker
         file: ./worker/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:latest
 
     - name: Increment version number
       run: |
