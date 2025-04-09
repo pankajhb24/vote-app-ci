@@ -1,5 +1,0 @@
-
-﻿redis
-altair
-pandas
-streamlit
