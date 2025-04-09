@@ -97,7 +97,7 @@ jobs:
         context: ./vote
         file: ./vote/Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-votee:${{ env.VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
 
     - name: Build and push result Docker image
       uses: docker/build-push-action@v4
