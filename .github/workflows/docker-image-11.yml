@@ -25,9 +25,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Generate a version tag
-      - name: Generate Docker Tag
-        id: tag
+      # Read version from VERSION.txt
+      - name: Read version
+        id: version
         run: |
           if [ -f VERSION.txt ]; then
             VERSION=$(cat VERSION.txt)
