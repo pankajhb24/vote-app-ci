@@ -1,4 +1,4 @@
-name: Build and Push Docker Images and Update Tags
+name: Build and Push Docker Images
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,9 +25,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Read version from VERSION.txt
-      - name: Read version
-        id: version
+      # Generate a version tag
+      - name: Generate Docker Tag
+        id: tag
         run: |
           if [ -f VERSION.txt ]; then
             VERSION=$(cat VERSION.txt)
