@@ -43,9 +43,7 @@ jobs:
           context: ./vote
           file: ./vote/Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
 
       # Build and push result Docker image
       - name: Build and push result Docker image
@@ -54,9 +52,7 @@ jobs:
           context: ./result
           file: ./result/Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
 
       # Build and push worker Docker image
       - name: Build and push worker Docker image
@@ -65,9 +61,7 @@ jobs:
           context: ./worker
           file: ./worker/Dockerfile
           push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:latest
-            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
 
       # Increment version number and commit
       - name: Increment version number and commit
