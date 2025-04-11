@@ -1,4 +1,4 @@
-# voting-app (Multi_Container_Docker_Compose_Project)
+## voting-app (Multi_Container_Docker_Compose_Project)
 
  This project deploys a multi-container application with the help of Docker-Compose.
 
