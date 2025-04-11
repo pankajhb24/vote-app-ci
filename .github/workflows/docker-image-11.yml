@@ -1,0 +1,84 @@
+name: Build and Push Docker Images and Update Tags
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Generate a version tag
+      - name: Generate Docker Tag
+        id: tag
+        run: |
+          if [ -f VERSION.txt ]; then
+            VERSION=$(cat VERSION.txt)
+          else
+            VERSION="1.0.0"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Build and push vote Docker image
+      - name: Build and push vote Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./vote
+          file: ./vote/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.VERSION }}
+
+      # Build and push result Docker image
+      - name: Build and push result Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./result
+          file: ./result/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.VERSION }}
+
+      # Build and push worker Docker image
+      - name: Build and push worker Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./worker
+          file: ./worker/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.VERSION }}
+
+      # Increment version number and commit
+      - name: Increment version number and commit
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          VERSION=$(cat VERSION.txt)
+          NEW_VERSION=$(echo $VERSION | awk -F. -v OFS=. '{$NF++; print}')
+          echo $NEW_VERSION > VERSION.txt
+          git config --global user.email "pankajbehare2024@gmail.com"
+          git config --global user.name "pankajhb24"
+          git add VERSION.txt
+          git commit -m "Increment version number to $NEW_VERSION"
+          git push https://github-actions:${GH_PAT}@github.com/pankajhb24/vote-app-ci.git HEAD:main
