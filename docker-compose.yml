@@ -37,7 +37,7 @@ services:
 
   vote:
     build: ./vote
-    image: pankajphb/vote-app-vote:8.2
+    image: pankajphb/vote-app-vote:latest
     container_name: vote
     environment:
       REDIS_HOST: redis
@@ -51,7 +51,7 @@ services:
 
   worker:
     build: ./worker
-    image: pankajphb/vote-app-worker:8.2
+    image: pankajphb/vote-app-worker:latest
     container_name: worker
     environment:
       REDIS_HOST: redis
@@ -70,7 +70,7 @@ services:
 
   result:
     build: ./result
-    image: pankajphb/vote-app-result:8.2
+    image: pankajphb/vote-app-result:latest
     container_name: result
     environment:
       POSTGRES_HOST: postgresdb
