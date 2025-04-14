@@ -49,6 +49,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:${{ env.COMBINED_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-vote:cache,mode=max
 
       # Build and push result Docker image
       - name: Build and push result Docker image
@@ -59,6 +61,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:${{ env.COMBINED_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-result:cache,mode=max
 
       # Build and push worker Docker image
       - name: Build and push worker Docker image
@@ -69,6 +73,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:${{ env.COMBINED_TAG }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/vote-app-worker:cache,mode=max
 
       # Increment version number and commit
       - name: Increment version number and commit
