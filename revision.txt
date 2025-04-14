@@ -1,7 +1,3 @@
 vote-app-vote:8.23-2025-04-14
 vote-app-worker:8.23-2025-04-14
 vote-app-result:8.23-2025-04-14
-vote-app-vote:8.24-2025-04-14
-vote-app-worker:8.24-2025-04-14
-vote-app-result:8.24-2025-04-14
-
